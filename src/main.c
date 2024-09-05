@@ -1,3 +1,13 @@
+/********************************************************************************************* */
+//    Eduboard2 ESP32-S3 Template with BSP
+//    Author: Martin Burger
+//    Juventus Technikerschule
+//    Version: 1.0.0
+//    
+//    This is the ideal starting point for a new Project. BSP for most of the Eduboard2
+//    Hardware is included under components/eduboard2.
+//    Hardware support can be activated/deactivated in components/eduboard2/eduboard2_config.h
+/********************************************************************************************* */
 #include "eduboard2.h"
 #include "memon.h"
 
