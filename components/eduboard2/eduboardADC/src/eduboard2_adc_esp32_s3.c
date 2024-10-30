@@ -28,8 +28,10 @@ adc_cali_handle_t adc1_cali_handle = NULL;
 static int* adc_raw;
 static int* voltage;
 static uint16_t** adcbuffer;
+void (*adcStreamCallbackFunction)() = NULL;
 
-
+int8_t channelmap_ANX_TO_ADCX[5] = {-1,-1,-1,-1,-1};
+int8_t channelmap_ADCX_TO_ANX[10] = {-1,-1,-1,-1,-1,-1,-1,-1,-1,-1};
 adc_channel_t* channels;
 
 
@@ -72,12 +74,12 @@ static void continuous_adc_init(adc_channel_t *channel, uint8_t channel_num, adc
     adc_continuous_handle_t handle = NULL;
 
     adc_continuous_handle_cfg_t adc_config = {
-        .max_store_buf_size = 1024*SOC_ADC_DIGI_RESULT_BYTES,
-        .conv_frame_size = buffersize*SOC_ADC_DIGI_RESULT_BYTES,
+        .max_store_buf_size = buffersize*2,
+        .conv_frame_size = buffersize,
     };
     ESP_ERROR_CHECK(adc_continuous_new_handle(&adc_config, &handle));
 
-    uint32_t sample_freq = 1000000/samplerate_us;
+    uint32_t sample_freq = (1000000/samplerate_us)*channel_num;
     ESP_LOGI(TAG, "Set ADC Sampling Frequency to %iHz" ,(int)(sample_freq));
 
     adc_continuous_config_t dig_cfg = {
@@ -107,19 +109,29 @@ static void continuous_adc_init(adc_channel_t *channel, uint8_t channel_num, adc
 uint8_t initADCChannels() {
     uint8_t activeChannels = 0;
     #ifdef CONFIG_ENABLE_AN0
+    channelmap_ADCX_TO_ANX[AN0_CHANNEL] = activeChannels;
     activeChannels++;
+    channelmap_ANX_TO_ADCX[AN0] = AN0_CHANNEL;
     #endif
     #ifdef CONFIG_ENABLE_AN1
+    channelmap_ADCX_TO_ANX[AN1_CHANNEL] = activeChannels;
     activeChannels++;
+    channelmap_ANX_TO_ADCX[AN1] = AN1_CHANNEL;
     #endif
     #ifdef CONFIG_ENABLE_AN2
+    channelmap_ADCX_TO_ANX[AN2_CHANNEL] = activeChannels;
     activeChannels++;
+    channelmap_ANX_TO_ADCX[AN2] = AN2_CHANNEL;
     #endif
     #ifdef CONFIG_ENABLE_AN3
+    channelmap_ADCX_TO_ANX[AN3_CHANNEL] = activeChannels;
     activeChannels++;
+    channelmap_ANX_TO_ADCX[AN3] = AN3_CHANNEL;
     #endif
     #ifdef CONFIG_ENABLE_AN4
+    channelmap_ADCX_TO_ANX[AN4_CHANNEL] = activeChannels;
     activeChannels++;
+    channelmap_ANX_TO_ADCX[AN4] = AN4_CHANNEL;
     #endif
     if(activeChannels > 0) {
         channels = malloc(sizeof(adc_channel_t)*activeChannels);
@@ -137,42 +149,53 @@ uint8_t initADCChannels() {
     uint8_t i = 0;
     #ifdef CONFIG_ENABLE_AN0
     channels[i] = AN0_CHANNEL;
+    channelmap_ADCX_TO_ANX[AN0_CHANNEL] = i;
     i++;
     #endif
     #ifdef CONFIG_ENABLE_AN1
     channels[i] = AN1_CHANNEL;
+    channelmap_ADCX_TO_ANX[AN1_CHANNEL] = i;
     i++;
     #endif
     #ifdef CONFIG_ENABLE_AN2
     channels[i] = AN2_CHANNEL;
+    channelmap_ADCX_TO_ANX[AN2_CHANNEL] = i;
     i++;
     #endif
     #ifdef CONFIG_ENABLE_AN3
     channels[i] = AN3_CHANNEL;
+    channelmap_ADCX_TO_ANX[AN3_CHANNEL] = i;
     i++;
     #endif
     #ifdef CONFIG_ENABLE_AN4
     channels[i] = AN4_CHANNEL;
+    channelmap_ADCX_TO_ANX[AN4_CHANNEL] = i;
     i++;
     #endif
     return activeChannels;
 }
 
 void setADCDataValue(uint8_t channel, int value) {
-    for(int i = 0; i < sizeof(channels); i++) {
-        if(channels[i] == channel) {
-            adc_raw[i] = value;
-            adc_cali_raw_to_voltage(adc1_cali_handle, value, &voltage[i]);
-            return;
-        }
-    }
+    if(channelmap_ADCX_TO_ANX[channel] == -1) return;
+    adc_raw[channelmap_ADCX_TO_ANX[channelmap_ANX_TO_ADCX[channel]]] = value;
+    adc_cali_raw_to_voltage(adc1_cali_handle, value, &voltage[channelmap_ADCX_TO_ANX[channelmap_ANX_TO_ADCX[channel]]]);
+    // for(int i = 0; i < sizeof(channels); i++) {
+    //     if(channels[i] == channel) {
+    //         adc_raw[i] = value;
+    //         adc_cali_raw_to_voltage(adc1_cali_handle, value, &voltage[i]);
+    //         return;
+    //     }
+    // }
 }
 int getADCRawDataValue(uint8_t channel) {
-    for(int i = 0; i < sizeof(channels); i++) {
-        if(channels[i] == channel) {
-            return adc_raw[i];
-        }
+    if(channelmap_ANX_TO_ADCX[channel] != -1) {
+        // return adc_raw[channelmap_ADCX_TO_ANX]
     }
+    // for(int i = 0; i < sizeof(channels); i++) {
+    //     if(channels[i] == channel) {
+    //         return adc_raw[i];
+    //     }
+    // }
     return 0;
 }
 int getADCVoltageValue(uint8_t channel) {
@@ -194,41 +217,46 @@ void adcTask(void * parameter) {
     adc_calibration_init(ADC_UNIT, ADC_ATTENUATION, &adc1_cali_handle);
 #ifdef CONFIG_ENABLE_ADC_STREAMING
     
-    uint8_t result[CONFIG_ADC_STREAMING_BUFFERSIZE*SOC_ADC_DIGI_RESULT_BYTES] = {0};
-    memset(result, 0xcc, CONFIG_ADC_STREAMING_BUFFERSIZE*SOC_ADC_DIGI_RESULT_BYTES);
+    uint8_t* result;
+    uint32_t buffersize = CONFIG_ADC_STREAMING_BUFFERSIZE*SOC_ADC_DIGI_RESULT_BYTES*numberofchannels;
+    result = malloc(buffersize);
+    memset(result, 0xcc, buffersize);
     adc_continuous_handle_t handle = NULL;
-    continuous_adc_init(channels, numberofchannels, &handle, ADC_STREAM_SAMPLERATE_US, CONFIG_ADC_STREAMING_BUFFERSIZE);
+    continuous_adc_init(channels, numberofchannels, &handle, ADC_STREAM_SAMPLERATE_US, buffersize);
     adc_continuous_start(handle);
+    uint32_t n[5] = {0,0,0,0,0};
     for(;;) {
-        ret = adc_continuous_read(handle, result, CONFIG_ADC_STREAMING_BUFFERSIZE*SOC_ADC_DIGI_RESULT_BYTES, &ret_num, 0);
+        for(int i = 0; i < 5; i++) {
+            n[i] = 0;
+        }
+        ret = adc_continuous_read(handle, result, buffersize, &ret_num, portMAX_DELAY);
         if (ret == ESP_OK) {
             // ESP_LOGI("TASK", "ret is %x, ret_num is %"PRIu32" bytes", ret, ret_num);
-            adc_digi_output_data_t *channel_extract = (adc_digi_output_data_t*)&result[0];
-            uint32_t chan_num = ADC_GET_CHANNEL(channel_extract);
-            uint8_t bufferselect = 0;
-            for(int i = 0; i < numberofchannels; i++) {
-                if(channels[i] == chan_num) {
-                    bufferselect = i;
-                    break;
-                }
-            }
-            uint32_t n = 0;
             for (int i = 0; i < ret_num; i += SOC_ADC_DIGI_RESULT_BYTES) {
                 adc_digi_output_data_t *p = (adc_digi_output_data_t*)&result[i];
-                // uint32_t chan_num = ADC_GET_CHANNEL(p);
+                uint32_t chan_num = ADC_GET_CHANNEL(p);
                 uint32_t data = ADC_GET_DATA(p);
                 /* Check the channel number validation, the data is invalid if the channel num exceed the maximum channel */
                 if (chan_num < SOC_ADC_CHANNEL_NUM(ADC_UNIT)) {
-                    adcbuffer[bufferselect][n] = data;
-                    n++;
+                    adcbuffer[channelmap_ADCX_TO_ANX[chan_num]][n[channelmap_ADCX_TO_ANX[chan_num]]++] = data;
+                    // n[channelmap_ADCX_TO_ANX[chan_num]]++;
+
                     // ESP_LOGI(TAG, "Unit: %s, Channel: %"PRIu32", Value: %"PRIx32, unit, chan_num, data);
                 } else {
                     ESP_LOGE(TAG, "Invalid ADC Data");
                     // ESP_LOGW(TAG, "Invalid data [%s_%"PRIu32"_%"PRIx32"]", unit, chan_num, data);
                 }
             }
-            ESP_LOGW(TAG, "Chan %i saved", (int)(chan_num));
-            vTaskDelay(1);
+            // ESP_LOGW(TAG, "channelmap_ANX_TO_ADCX: %i\t %i\t %i\t %i\t %i", (int)channelmap_ANX_TO_ADCX[0], (int)channelmap_ANX_TO_ADCX[1], (int)channelmap_ANX_TO_ADCX[2], (int)channelmap_ANX_TO_ADCX[3], (int)channelmap_ANX_TO_ADCX[4]);
+            // ESP_LOGW(TAG, "channelmap_ADCX_TO_ANX: %i\t %i\t %i\t %i\t %i\t %i\t %i\t %i\t %i\t %i", (int)channelmap_ADCX_TO_ANX[0], (int)channelmap_ADCX_TO_ANX[1], (int)channelmap_ADCX_TO_ANX[2], (int)channelmap_ADCX_TO_ANX[3], (int)channelmap_ADCX_TO_ANX[4], (int)channelmap_ADCX_TO_ANX[5], (int)channelmap_ADCX_TO_ANX[6], (int)channelmap_ADCX_TO_ANX[7], (int)channelmap_ADCX_TO_ANX[8], (int)channelmap_ADCX_TO_ANX[9]);
+            // ESP_LOGW(TAG, "Data received:          n0:%i - n1:%i - n2:%i - n3:%i - n4:%i", (int)n[0], (int)n[1], (int)n[2], (int)n[3], (int)n[4]);
+            if(adcStreamCallbackFunction != NULL) {
+                (*adcStreamCallbackFunction)();
+            }
+            if(n[0] < CONFIG_ADC_STREAMING_BUFFERSIZE) {
+                ESP_LOGE(TAG, "Not enough Data received!");
+            }
+            // vTaskDelay(1);
         }
     }
 #else
@@ -296,13 +324,10 @@ void adcTask(void * parameter) {
 //         vTaskDelay(pdMS_TO_TICKS(50));
 //     }
 }
-void adc_get_buffer(uint8_t adc_channel, uint16_t* buffer) {
-
-}
 uint32_t adc_get_raw(uint8_t adc_channel) {
     uint32_t returnValue = 0;
     xSemaphoreTake(hADCMutex, portMAX_DELAY);
-    returnValue = getADCRawDataValue(adc_channel);
+    // returnValue = getADCRawDataValue(adc_channel);
     xSemaphoreGive(hADCMutex);
     return returnValue;
 }
@@ -313,9 +338,18 @@ uint32_t adc_get_voltage_mv(uint8_t adc_channel) {
     xSemaphoreGive(hADCMutex);
     return returnValue;
 }
+uint32_t adc_get_buffer(uint8_t adc_channel, uint16_t* buffer) {
+    if(channelmap_ANX_TO_ADCX[adc_channel] == -1) return 0;
+    for(uint32_t i = 0; i < CONFIG_ADC_STREAMING_BUFFERSIZE; i++) {
+        buffer[i] = adcbuffer[channelmap_ADCX_TO_ANX[channelmap_ANX_TO_ADCX[adc_channel]]][i];
+    }
+    return CONFIG_ADC_STREAMING_BUFFERSIZE;
+}
 
 void adc_set_stream_callback(void* stream_callback_function) {
-
+#ifdef CONFIG_ENABLE_ADC_STREAMING
+    adcStreamCallbackFunction = stream_callback_function;
+#endif
 }
 
 void eduboard_init_adc() {

@@ -23,7 +23,7 @@ typedef struct {
     uint8_t dacA[CONFIG_DAC_STREAMING_BUFFERSIZE];
     uint8_t dacB[CONFIG_DAC_STREAMING_BUFFERSIZE];
 } dac_stream_data_t;
-void (*streamCallbackFunction)() = NULL;
+void (*dacStreamCallbackFunction)() = NULL;
 uint32_t dacPos = 0;
 uint8_t selectedBuffer = 0;
 dac_stream_data_t dacBufferA, dacBufferB;
@@ -156,8 +156,8 @@ void dac_bufferManager(void* param) {
                 }
                 xEventGroupClearBits(dacStreamControl, EG_STREAMCONTROL_BUFFERB_EMPTY);
             }
-            if(streamCallbackFunction != NULL) {
-                (*streamCallbackFunction)();
+            if(dacStreamCallbackFunction != NULL) {
+                (*dacStreamCallbackFunction)();
             }
         }
     }
@@ -166,7 +166,7 @@ void dac_bufferManager(void* param) {
 
 void dac_set_stream_callback(void* stream_callback_function) {
 #ifdef CONFIG_DAC_STREAMING
-    streamCallbackFunction = stream_callback_function;
+    dacStreamCallbackFunction = stream_callback_function;
 #endif
 }
 
@@ -192,7 +192,7 @@ void eduboard_init_dac() {
     dacBufferSwitchSignal = xSemaphoreCreateBinary();
     dacStreamControl = xEventGroupCreate();
     gpspi_init_nonblocking(&dev_dac_spi, GPIO_MOSI, GPIO_MISO, GPIO_SCK, GPIO_FLASH_DAC_CS, DAC_FREQ_MHZ, true);
-    xTaskCreate(dac_bufferManager, "dac_bufferManagerTask", 2048, NULL, 10, NULL);
+    xTaskCreate(dac_bufferManager, "dac_bufferManagerTask", 2*2048, NULL, 10, NULL);
 #else
     gpspi_init(&dev_dac_spi, GPIO_MOSI, GPIO_MISO, GPIO_SCK, GPIO_FLASH_DAC_CS, DAC_FREQ_MHZ, false);
 #endif
