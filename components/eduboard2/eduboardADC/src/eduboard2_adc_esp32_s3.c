@@ -191,9 +191,9 @@ void adcTask(void * parameter) {
     ESP_LOGI(TAG, "init ADC...");
     hADCMutex = xSemaphoreCreateMutex();
     uint32_t ret_num = 0;
+    adcbuffer = NULL;
     uint8_t numberofchannels = initADCChannels();
     adc_calibration_init(ADC_UNIT, ADC_ATTENUATION, &adc1_cali_handle);
-    adcbuffer = NULL;
     uint8_t* result;
     uint32_t buffersize = 0;
     uint32_t n[5] = {0,0,0,0,0};
