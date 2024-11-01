@@ -19,7 +19,7 @@
 
 void templateTask(void* param) {
     //Init stuff here
-
+    vTaskDelay(100);
     for(;;) {
         // task main loop
         if(button_get_state(SW0, true) == SHORT_PRESSED) {

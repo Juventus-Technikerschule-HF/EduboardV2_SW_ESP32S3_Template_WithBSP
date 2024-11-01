@@ -5,8 +5,8 @@
 /*LED Config*/
 #define CONFIG_ENABLE_LED0
 #define CONFIG_ENABLE_LED1
-#define CONFIG_ENABLE_LED2
-#define CONFIG_ENABLE_LED3
+// #define CONFIG_ENABLE_LED2
+// #define CONFIG_ENABLE_LED3
 #define CONFIG_ENABLE_LED4
 #define CONFIG_ENABLE_LED5
 #define CONFIG_ENABLE_LED6
@@ -28,13 +28,24 @@
 #define CONFIG_ENABLE_ROTARYENCODER
 
 /*Analog Input Config*/
+// #define CONFIG_ENABLE_ADC_STREAMING
 #define CONFIG_ENABLE_AN0
 // #define CONFIG_ENABLE_AN1
 // #define CONFIG_ENABLE_AN2
 // #define CONFIG_ENABLE_AN3
 // #define CONFIG_ENABLE_AN4
-// #define CONFIG_ENABLE_AN5
 // #define CONFIG_ADC_DEBUG
+#ifdef CONFIG_ENABLE_ADC_STREAMING
+    #define CONFIG_ADC_STREAMING_BUFFERSIZE 256
+    // #define ADC_STREAM_SAMPLERATE_US    50
+    #define ADC_STREAM_SAMPLERATE_US    60
+    // #define ADC_STREAM_SAMPLERATE_US    100
+    // #define ADC_STREAM_SAMPLERATE_US    120
+    // #define ADC_STREAM_SAMPLERATE_US    200
+    // #define ADC_STREAM_SAMPLERATE_US    240
+    // #define ADC_STREAM_SAMPLERATE_US    300
+    // #define ADC_STREAM_SAMPLERATE_US    1000
+#endif
 
 
 /*DAC Output Config*/
@@ -43,18 +54,18 @@
     // #define CONFIG_DAC_STREAMING
     #ifdef CONFIG_DAC_STREAMING
         #define CONFIG_DAC_STREAMING_BUFFERSIZE 256
-        // #define DAC_STREAM_SAMPLERATE 50
-        #define DAC_STREAM_SAMPLERATE 60
-        // #define DAC_STREAM_SAMPLERATE 100
-        // #define DAC_STREAM_SAMPLERATE 120
-        // #define DAC_STREAM_SAMPLERATE 200
-        // #define DAC_STREAM_SAMPLERATE 240
-        // #define DAC_STREAM_SAMPLERATE 300
+        // #define DAC_STREAM_SAMPLERATE    50
+        #define DAC_STREAM_SAMPLERATE    60
+        // #define DAC_STREAM_SAMPLERATE    100
+        // #define DAC_STREAM_SAMPLERATE    120
+        // #define DAC_STREAM_SAMPLERATE    200
+        // #define DAC_STREAM_SAMPLERATE    240
+        // #define DAC_STREAM_SAMPLERATE    300
     #endif
 #endif
 
 /*LCD Config*/
-#define CONFIG_ENABLE_LCD
+// #define CONFIG_ENABLE_LCD
 #ifdef CONFIG_ENABLE_LCD
     // #define CONFIG_LCD_ST7789
     #define CONFIG_LCD_ILI9488

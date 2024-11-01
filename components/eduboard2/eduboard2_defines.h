@@ -16,6 +16,12 @@
     #define GPIO_LED_6          37
     #define GPIO_LED_7          36
 
+    #define GPIO_GPIOX0         6
+    #define GPIO_GPIOX1         7
+    #define GPIO_GPIOX2         5
+    #define GPIO_GPIOX3         4
+    #define GPIO_GPIOX4         0
+
     #define GPIO_PWMLED_R       39
     #define GPIO_PWMLED_G       40
     #define GPIO_PWMLED_B       41
@@ -33,8 +39,17 @@
     #define GPIO_SW_2           48
     #define GPIO_SW_3           45
 
+    #define ADC_UNIT            ADC_UNIT_1
     #define GPIO_AN_0           9
     #define AN0_CHANNEL         ADC_CHANNEL_8
+    #define GPIO_AN_1           GPIO_GPIOX0
+    #define AN1_CHANNEL         ADC_CHANNEL_5
+    #define GPIO_AN_2           GPIO_GPIOX1
+    #define AN2_CHANNEL         ADC_CHANNEL_6
+    #define GPIO_AN_3           GPIO_GPIOX2
+    #define AN3_CHANNEL         ADC_CHANNEL_4
+    #define GPIO_AN_4           GPIO_GPIOX3
+    #define AN4_CHANNEL         ADC_CHANNEL_3
 
     #define GPIO_MISO           12
     #define GPIO_MOSI           13
@@ -56,12 +71,6 @@
 
     #define GPIO_FLASH_DAC_CS   3
     #define GPIO_SD_LDAC_CS     10
-    
-    #define GPIO_GPIOX0         6
-    #define GPIO_GPIOX1         7
-    #define GPIO_GPIOX2         5
-    #define GPIO_GPIOX3         4
-    #define GPIO_GPIOX4         0
 
     #define GPIO_GENERAL_RESET  8
 
@@ -116,6 +125,18 @@
 #endif
 
 #ifdef CONFIG_ENABLE_AN0
+    #define CONFIG_ENABLE_ANALOG
+#endif
+#ifdef CONFIG_ENABLE_AN1
+    #define CONFIG_ENABLE_ANALOG
+#endif
+#ifdef CONFIG_ENABLE_AN2
+    #define CONFIG_ENABLE_ANALOG
+#endif
+#ifdef CONFIG_ENABLE_AN3
+    #define CONFIG_ENABLE_ANALOG
+#endif
+#ifdef CONFIG_ENABLE_AN4
     #define CONFIG_ENABLE_ANALOG
 #endif
 
