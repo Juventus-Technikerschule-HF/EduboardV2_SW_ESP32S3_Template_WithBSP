@@ -5,8 +5,8 @@
 /*LED Config*/
 #define CONFIG_ENABLE_LED0
 #define CONFIG_ENABLE_LED1
-// #define CONFIG_ENABLE_LED2
-// #define CONFIG_ENABLE_LED3
+#define CONFIG_ENABLE_LED2
+#define CONFIG_ENABLE_LED3
 #define CONFIG_ENABLE_LED4
 #define CONFIG_ENABLE_LED5
 #define CONFIG_ENABLE_LED6
@@ -65,7 +65,7 @@
 #endif
 
 /*LCD Config*/
-// #define CONFIG_ENABLE_LCD
+#define CONFIG_ENABLE_LCD
 #ifdef CONFIG_ENABLE_LCD
     // #define CONFIG_LCD_ST7789
     #define CONFIG_LCD_ILI9488
