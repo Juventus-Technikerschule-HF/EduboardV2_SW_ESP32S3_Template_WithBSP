@@ -30,8 +30,8 @@
 /*Analog Input Config*/
 // #define CONFIG_ENABLE_ADC_STREAMING
 #define CONFIG_ENABLE_AN0
-#define CONFIG_ENABLE_AN1
-#define CONFIG_ENABLE_AN2
+// #define CONFIG_ENABLE_AN1
+// #define CONFIG_ENABLE_AN2
 // #define CONFIG_ENABLE_AN3
 // #define CONFIG_ENABLE_AN4
 // #define CONFIG_ADC_DEBUG
@@ -51,7 +51,7 @@
 /*DAC Output Config*/
 #define CONFIG_ENABLE_DAC
 #ifdef CONFIG_ENABLE_DAC
-    #define CONFIG_DAC_STREAMING
+    // #define CONFIG_DAC_STREAMING
     #ifdef CONFIG_DAC_STREAMING
         #define CONFIG_DAC_STREAMING_BUFFERSIZE 256
         // #define DAC_STREAM_SAMPLERATE    50
